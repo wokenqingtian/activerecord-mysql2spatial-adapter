@@ -37,6 +37,22 @@
 require 'rgeo/active_record'
 require 'active_record/connection_adapters/mysql2_adapter'
 
+# Allows rake db:schema:dump to work
+# See https://github.com/rgeo/rgeo-activerecord/issues/23
+module RGeo
+  module ActiveRecord
+    class SpatialIndexDefinition
+      def using
+      end
+      def type
+      end
+
+      def comment
+      end
+    end
+  end
+end
+
 
 # The activerecord-mysql2spatial-adapter gem installs the *mysql2spatial*
 # connection adapter into ActiveRecord.
@@ -52,14 +68,28 @@ module ActiveRecord
 
     # Create a mysql2spatial connection adapter.
 
-    def self.mysql2spatial_connection(config_)
-      config_[:username] = 'root' if config_[:username].nil?
-      if ::Mysql2::Client.const_defined?(:FOUND_ROWS)
-        config_[:flags] = ::Mysql2::Client::FOUND_ROWS
+    def self.mysql2spatial_connection(config)
+      config = config.symbolize_keys
+
+      config[:username] = 'root' if config[:username].nil?
+      config[:flags] ||= 0
+
+      if Mysql2::Client.const_defined? :FOUND_ROWS
+        if config[:flags].kind_of? Array
+          config[:flags].push "FOUND_ROWS".freeze
+        else
+          config[:flags] |= Mysql2::Client::FOUND_ROWS
+        end
       end
-      client_ = ::Mysql2::Client.new(config_.symbolize_keys)
-      options_ = [config_[:host], config_[:username], config_[:password], config_[:database], config_[:port], config_[:socket], 0]
-      ::ActiveRecord::ConnectionAdapters::Mysql2SpatialAdapter::MainAdapter.new(client_, logger, options_, config_)
+
+      client = Mysql2::Client.new(config)
+      ConnectionAdapters::Mysql2SpatialAdapter::MainAdapter.new(client, logger, nil, config)
+    rescue Mysql2::Error => error
+      if error.message.include?("Unknown database")
+        raise ActiveRecord::NoDatabaseError
+      else
+        raise
+      end
     end
 
 
@@ -84,7 +114,7 @@ end
 
 
 require 'active_record/connection_adapters/mysql2spatial_adapter/version.rb'
-require 'active_record/connection_adapters/mysql2spatial_adapter/column_methods.rb' # check if this works with Rails < 4.x
 require 'active_record/connection_adapters/mysql2spatial_adapter/main_adapter.rb'
 require 'active_record/connection_adapters/mysql2spatial_adapter/spatial_column.rb'
 require 'active_record/connection_adapters/mysql2spatial_adapter/arel_tosql.rb'
+require 'active_record/type/spatial.rb'

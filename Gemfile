@@ -34,14 +34,13 @@
 ;
 
 
-source "http://rubygems.org"
+source "https://rubygems.org"
 
-gem 'rgeo-activerecord', github: 'rgeo/rgeo-activerecord', branch: '1.0'
+gem 'rgeo-activerecord', '~> 2.0'
 gem 'mysql2', '>= 0.2.13'
-gem 'activerecord', '>= 4.0', '< 4.2'
+gem 'activerecord', '~> 4.2'
 
-group :test do
+group(:test) do
   gem 'rake', '>= 0.9.2'
   gem 'rdoc', '>= 3.12'
-  gem 'pry'
 end
