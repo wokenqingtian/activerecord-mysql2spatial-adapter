@@ -41,14 +41,12 @@ module RGeo
   module ActiveRecord  # :nodoc:
     module Mysql2SpatialAdapter  # :nodoc:
       module Tests  # :nodoc:
-
         class TestBasic < ::Minitest::Test  # :nodoc:
 
           DATABASE_CONFIG_PATH = ::File.dirname(__FILE__)+'/database.yml'
           include RGeo::ActiveRecord::AdapterTestHelper
 
           define_test_methods do
-
 
             def populate_ar_class(content_)
               klass_ = create_ar_class
@@ -63,7 +61,7 @@ module RGeo
 
 
             def test_version
-              refute_nil(::ActiveRecord::ConnectionAdapters::Mysql2SpatialAdapter::VERSION)
+              assert_not_nil(::ActiveRecord::ConnectionAdapters::Mysql2SpatialAdapter::VERSION)
             end
 
 
@@ -195,11 +193,9 @@ module RGeo
               assert(klass_.cached_attributes.include?('geom'))
             end
 
-
           end
 
         end
-
       end
     end
   end
