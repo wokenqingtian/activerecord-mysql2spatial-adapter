@@ -42,19 +42,21 @@ module ActiveRecord
 
         FACTORY_SETTINGS_CACHE = {}
 
-        def initialize(factory_settings_, table_name_, name_, default_, sql_type_=nil, null_=true)
+        def initialize(factory_settings_, name, default, sql_type_metadata = nil, null = true, table_name = nil, default_function = nil, collation = nil, comment: nil)
           @factory_settings = factory_settings_
-          @table_name = table_name_
-          super(name_, default_,sql_type_, null_)
-          @geometric_type = ::RGeo::ActiveRecord.geometric_type_from_name(sql_type_)
-          if type == :spatial
+          @table_name = table_name
+          @geometric_type = ::RGeo::ActiveRecord.geometric_type_from_name(sql_type_metadata.sql_type)
+          if sql_type_metadata.type == :spatial
             @limit = { type: @geometric_type.type_name.underscore }
+          else
+            @limit = sql_type_metadata.limit
           end
+          super(name, default, sql_type_metadata, null, table_name, default_function, collation, comment: comment)
           FACTORY_SETTINGS_CACHE[factory_settings_.object_id] = factory_settings_
         end
 
 
-        attr_reader :geometric_type
+        attr_reader :geometric_type, :limit
 
 
         def spatial?
