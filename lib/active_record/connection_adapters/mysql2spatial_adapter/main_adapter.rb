@@ -77,25 +77,15 @@ module ActiveRecord
         end
 
 
-        if Gem.loaded_specs['activerecord'].version < Gem::Version.create('5.1.0')
-          def type_to_sql(type_, limit_=nil, precision_=nil, scale_=nil, unsigned_=nil)
-            if (info_ = spatial_column_constructor(type_.to_sym))
-              type_ = limit_[:type] || type_ if limit_.is_a?(::Hash)
-              type_ = 'geometry' if type_.to_s == 'spatial'
-              type_ = type_.to_s.gsub('_', '').upcase
-            end
-            super(type_, limit_, precision_, scale_, unsigned_)
+        def type_to_sql(type, **opts)
+          if (spatial_column_constructor(type.to_sym))
+            limit = opts[:limit]
+            type = limit[:type] || type if limit.is_a?(::Hash)
+            type = 'geometry' if type.to_s == 'spatial'
+            type = type.to_s.tr('_', '').upcase
           end
-        else
-          # https://github.com/rails/rails/commit/ae39b1a03d0a859be9d5342592c8936f89fcbacf
-          def type_to_sql(type_, limit_:nil, precision_:nil, scale_:nil, unsigned_:nil, **rest_)
-            if (info_ = spatial_column_constructor(type_.to_sym))
-              type_ = limit_[:type] || type_ if limit_.is_a?(::Hash)
-              type_ = 'geometry' if type_.to_s == 'spatial'
-              type_ = type_.to_s.gsub('_', '').upcase
-            end
-            super(type_, rest_.merge({limit:limit_, precision:precision_, scale:scale_, unsigned:unsigned_}))
-          end
+
+          super
         end
 
 
@@ -148,7 +138,7 @@ module ActiveRecord
                 if row[:Index_type] != 'SPATIAL'
                   indexes << IndexDefinition.new(row[:Table], row[:Key_name], row[:Non_unique].to_i == 0, [], [], nil, nil, index_type, index_using, row[:Index_comment].presence)
                 else
-                  indexes << ::RGeo::ActiveRecord::SpatialIndexDefinition.new(row[:Table], row[:Key_name], row[:Non_unique] == 0, [], [], row_[:Index_type] == 'SPATIAL')
+                  indexes << ::RGeo::ActiveRecord::SpatialIndexDefinition.new(row[:Table], row[:Key_name], row[:Non_unique] == 0, [], [], row[:Index_type] == 'SPATIAL')
                 end
               end
 
