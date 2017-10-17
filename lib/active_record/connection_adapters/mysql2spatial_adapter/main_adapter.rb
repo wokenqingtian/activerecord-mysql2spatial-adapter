@@ -136,14 +136,14 @@ module ActiveRecord
                 index_type  = INDEX_TYPES.include?(mysql_index_type)  ? mysql_index_type : nil
                 index_using = INDEX_USINGS.include?(mysql_index_type) ? mysql_index_type : nil
                 if row[:Index_type] != 'SPATIAL'
-                  indexes << IndexDefinition.new(row[:Table], row[:Key_name], row[:Non_unique].to_i == 0, [], [], nil, nil, index_type, index_using, row[:Index_comment].presence)
+                  indexes << IndexDefinition.new(row[:Table], row[:Key_name], row[:Non_unique].to_i == 0, [], {}, nil, nil, index_type, index_using, row[:Index_comment].presence)
                 else
                   indexes << ::RGeo::ActiveRecord::SpatialIndexDefinition.new(row[:Table], row[:Key_name], row[:Non_unique] == 0, [], [], row[:Index_type] == 'SPATIAL')
                 end
               end
 
               indexes.last.columns << row[:Column_name]
-              indexes.last.lengths << row[:Sub_part]  unless indexes.last.try(:spatial)
+              indexes.last.lengths.merge!(row[:Column_name] => row[:Sub_part].to_i) if row[:Sub_part] && !indexes.last.try(:spatial)
             end
           end
           indexes
